@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(16);
+select plan(23);
 
 insert into auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -19,6 +19,13 @@ select is((select count(*)::integer from public.exercises where id = '22222222-2
 select ok(not has_table_privilege('authenticated', 'public.exercise_completions', 'INSERT'), 'direct completion inserts are revoked');
 select ok(not has_table_privilege('authenticated', 'public.day_plans', 'INSERT'), 'direct day plan inserts are revoked');
 select ok(not has_table_privilege('authenticated', 'public.routine_template_items', 'INSERT'), 'routine items can only be written transactionally');
+select ok(not has_function_privilege('anon', 'public.current_user_date(uuid)', 'EXECUTE'), 'anonymous users cannot call the date helper');
+select ok(not has_function_privilege('anon', 'public.save_day_plan(date,text,jsonb)', 'EXECUTE'), 'anonymous users cannot call the plan RPC');
+select ok(not has_function_privilege('anon', 'public.set_exercise_completion(uuid,boolean)', 'EXECUTE'), 'anonymous users cannot call the completion RPC');
+select ok(not has_function_privilege('anon', 'public.save_day_reflection(date,text)', 'EXECUTE'), 'anonymous users cannot call the reflection RPC');
+select ok(not has_function_privilege('anon', 'public.save_routine_template(text,jsonb)', 'EXECUTE'), 'anonymous users cannot call the template RPC');
+select ok(not has_function_privilege('anon', 'public.handle_new_user()', 'EXECUTE'), 'anonymous users cannot call the profile trigger helper');
+select ok(not has_function_privilege('authenticated', 'public.handle_new_user()', 'EXECUTE'), 'signed-in users cannot call the profile trigger helper');
 select throws_like(
   $$ insert into public.exercise_favorites (user_id, exercise_id) values ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222299') $$,
   '%row-level security%',
