@@ -381,6 +381,7 @@ grant execute on function public.save_routine_template(text, jsonb) to authentic
 revoke insert, update, delete on public.day_plans from anon, authenticated;
 revoke insert, update, delete on public.day_exercises from anon, authenticated;
 revoke insert, update, delete on public.exercise_completions from anon, authenticated;
+revoke insert, update, delete on public.routine_templates, public.routine_template_items from anon, authenticated;
 revoke all on public.profiles, public.exercises, public.exercise_favorites, public.day_plans, public.day_exercises, public.exercise_completions, public.routine_templates, public.routine_template_items from anon;
 grant select on public.profiles, public.exercises, public.exercise_favorites, public.day_plans, public.day_exercises, public.exercise_completions, public.routine_templates, public.routine_template_items to authenticated;
 grant insert, update on public.profiles, public.exercises to authenticated;
