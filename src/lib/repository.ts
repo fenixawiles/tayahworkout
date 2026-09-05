@@ -97,16 +97,9 @@ export async function loadRemoteData(user: User): Promise<AppData> {
   const firstError = [profileResult, exerciseResult, favoriteResult, planResult, templateResult, preferenceResult].find((result) => result.error)?.error
   if (firstError) throw firstError
 
-  let profileRow = profileResult.data
+  const profileRow = profileResult.data
   if (!profileRow) {
-    const fallbackProfile = {
-      id: user.id,
-      display_name: user.user_metadata.display_name || user.email?.split('@')[0] || 'Friend',
-      time_zone: user.user_metadata.time_zone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-    }
-    const created = await supabase.from('profiles').upsert(fallbackProfile).select('*').single()
-    if (created.error) throw created.error
-    profileRow = created.data
+    throw new Error('Your account profile could not be loaded. Please contact support before creating another account.')
   }
 
   const favorites = new Set((favoriteResult.data ?? []).map((item) => item.exercise_id))
@@ -152,7 +145,7 @@ export async function loadRemoteData(user: User): Promise<AppData> {
   } satisfies RoutineTemplate)))
 
   const appData = {
-    profile: { id: profileRow.id, displayName: profileRow.display_name, timeZone: profileRow.time_zone },
+    profile: { id: profileRow.id, displayName: profileRow.display_name, timeZone: profileRow.time_zone, username: profileRow.username, friendCode: profileRow.friend_code, usernameChangedAt: profileRow.username_changed_at, timezoneChangedAt: profileRow.timezone_changed_at },
     exercises: exercises.length ? exercises : seedExercises(),
     plans,
     templates,
@@ -279,9 +272,10 @@ export async function saveRemoteTemplate(name: string, plan: DayPlan) {
 }
 
 export async function updateRemoteProfile(profile: Profile) {
-  const { error } = await supabase!.from('profiles').update({
-    display_name: profile.displayName,
-    time_zone: profile.timeZone,
-  }).eq('id', profile.id)
+  const { error } = await supabase!.rpc('update_profile', {
+    p_display_name: profile.displayName,
+    p_time_zone: profile.timeZone,
+    p_username: profile.username ?? '',
+  })
   if (error) throw error
 }

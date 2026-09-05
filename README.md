@@ -2,6 +2,8 @@
 
 Momentum is a focused, Android-first workout calendar built with React, TypeScript, Vite, Supabase, and a lightweight installable PWA shell. It keeps the Today screen calm, makes workout planning explicit, and enforces same-day completion in the database using the profile's saved IANA timezone. Exercises carry Upper body, Lower body, Core, or Full body focus tags, and search matches either names or tags.
 
+Signed-in accounts may choose an exact-match username, connect privately with a known friend, and join invitation-only consistency challenges. Challenge participants see names, usernames, and aggregate daily scores—never workout notes, photos, weights, reflections, email addresses, or health data. More also contains profile editing, data export, private support/privacy/deletion requests, policies, blocking, reporting, and an RPC-only moderator queue.
+
 ## Run locally
 
 ```bash
@@ -20,6 +22,8 @@ Without Supabase environment variables, the app offers a device-local preview wi
 4. Add repository variables named `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in GitHub Actions settings. Use the publishable/anon browser key—never a service-role key.
 
 The migration creates all tables, RLS policies, RPCs, the private `exercise-images` bucket, and 24 public-domain seed exercises. Custom images are stored under user-ID-prefixed paths and served with short-lived signed URLs.
+
+Workout reminders are feature-gated off until a real transactional email provider is configured. See [docs/reminder-rollout.md](docs/reminder-rollout.md). A direct Samsung Watch connection is intentionally omitted from the PWA because Health Connect and Samsung's SDKs require native Android code; the researched integration boundary is documented in [docs/health-connect-decision.md](docs/health-connect-decision.md).
 
 ## Verify
 

@@ -125,6 +125,7 @@ export function AuthScreen({ onDemo, onAuthenticated, recoveryMode }: AuthScreen
           </div>
         )}
       </section>
+      <footer className="auth-legal-links"><a href="?legal=terms">Terms of use</a><span>·</span><a href="?legal=privacy">Privacy policy</a></footer>
     </main>
   )
 }

@@ -16,6 +16,47 @@ test('keeps Today focused and free of horizontal overflow', async ({ page }) => 
   const nav = page.getByRole('navigation', { name: 'Main navigation' })
   const box = await nav.boundingBox()
   expect(box?.y).toBeLessThanOrEqual((await page.evaluate(() => window.innerHeight)) - 50)
+  await expect(nav.getByRole('button')).toHaveCount(4)
+  expect(await page.locator('.app-frame').evaluate((element) => parseFloat(getComputedStyle(element).paddingTop))).toBeGreaterThanOrEqual(12)
+})
+
+test('keeps friends, challenges, profile, and policies calm inside More', async ({ page }) => {
+  await page.getByRole('button', { name: 'More', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'A little more.' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Friends/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Challenges/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Workout reminders/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Health|Samsung|watch/i })).toHaveCount(0)
+
+  await page.getByRole('button', { name: /Friends/ }).click()
+  await expect(page.getByRole('heading', { name: 'Friends', exact: true })).toBeVisible()
+  await expect(page.getByText('Exact matches only.')).toBeVisible()
+  await expect(page.getByText('Your workout journal stays private.')).toBeVisible()
+  await page.goBack()
+  await expect(page.getByRole('heading', { name: 'A little more.' })).toBeVisible()
+
+  await page.getByRole('button', { name: /Profile & timezone/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Your profile' })).toBeVisible()
+  await page.getByLabel('Display name').fill('Tayah M')
+  await expect(page.getByText('Unsaved changes')).toBeVisible()
+  await page.goBack()
+  await expect(page.getByRole('alertdialog', { name: 'Discard profile changes?' })).toBeVisible()
+  await page.getByRole('button', { name: 'Discard' }).click()
+
+  await page.getByRole('button', { name: /Privacy policy/ }).click()
+  await expect(page.getByRole('heading', { name: 'What Momentum stores' })).toBeVisible()
+  await expect(page.getByText(/does not connect to Samsung Health/)).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
+
+test('makes policies available before sign-in', async ({ page }) => {
+  await page.evaluate(() => sessionStorage.removeItem('momentum-demo-active'))
+  await page.goto('/?legal=terms')
+  await expect(page.getByRole('heading', { name: 'Terms of use' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Fitness, not medical advice' })).toBeVisible()
+  await page.getByRole('button', { name: 'Back to Momentum' }).click()
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Privacy policy' })).toBeVisible()
 })
 
 test('unwinds picker, dirty editor, and selected day with Android Back', async ({ page }) => {

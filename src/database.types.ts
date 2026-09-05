@@ -9,7 +9,7 @@ export interface Database {
   public: {
     Tables: {
       profiles: {
-        Row: { id: string; display_name: string; time_zone: string; created_at: string; updated_at: string }
+        Row: { id: string; display_name: string; time_zone: string; username: string | null; friend_code: string; username_changed_at: string | null; timezone_changed_at: string | null; created_at: string; updated_at: string }
         Insert: { id: string; display_name: string; time_zone?: string; created_at?: string; updated_at?: string }
         Update: { id?: string; display_name?: string; time_zone?: string; created_at?: string; updated_at?: string }
         Relationships: []
@@ -76,6 +76,21 @@ export interface Database {
       set_exercise_completion: { Args: { p_day_exercise_id: string; p_completed: boolean }; Returns: undefined }
       save_day_reflection: { Args: { p_plan_date: string; p_reflection: string }; Returns: undefined }
       save_routine_template: { Args: { p_name: string; p_items: Json }; Returns: string }
+      update_profile: { Args: { p_display_name: string; p_time_zone: string; p_username: string }; Returns: undefined }
+      get_community: { Args: Record<string, never>; Returns: Json }
+      find_friend: { Args: { p_query: string }; Returns: Json }
+      send_friend_request: { Args: { p_user_id: string }; Returns: undefined }
+      respond_friend_request: { Args: { p_request_id: string; p_action: string }; Returns: undefined }
+      set_user_block: { Args: { p_user_id: string; p_blocked: boolean }; Returns: undefined }
+      report_user: { Args: { p_user_id: string; p_reason: string; p_details: string; p_block?: boolean }; Returns: string }
+      create_competition: { Args: { p_friend_id: string; p_title: string; p_starts_on: string; p_days: number }; Returns: string }
+      respond_competition: { Args: { p_competition_id: string; p_action: string }; Returns: undefined }
+      submit_support_request: { Args: { p_kind: string; p_details: string }; Returns: string }
+      cancel_support_request: { Args: { p_id: string }; Returns: undefined }
+      get_moderation_queue: { Args: Record<string, never>; Returns: Json }
+      review_community_case: { Args: { p_id: string; p_kind: string; p_status: string; p_response: string; p_restrict?: boolean }; Returns: undefined }
+      get_account_settings: { Args: Record<string, never>; Returns: Json }
+      set_workout_reminder: { Args: { p_enabled: boolean }; Returns: undefined }
     }
     Enums: { exercise_category: Category; body_area: BodyArea }
     CompositeTypes: Record<never, never>

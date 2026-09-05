@@ -12,6 +12,10 @@ export interface Profile {
   id: string
   displayName: string
   timeZone: string
+  username?: string | null
+  friendCode?: string
+  usernameChangedAt?: string | null
+  timezoneChangedAt?: string | null
 }
 
 export interface Exercise {

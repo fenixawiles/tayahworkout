@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Activity, CalendarDays, House, Library, WifiOff } from 'lucide-react'
+import { Activity, ArrowLeft, CalendarDays, Ellipsis, House, Library, WifiOff } from 'lucide-react'
 import type { Session, User } from '@supabase/supabase-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { AuthScreen } from './components/AuthScreen'
@@ -10,6 +10,8 @@ import { LibraryView } from './components/LibraryView'
 import { ExerciseDetail } from './components/ExerciseDetail'
 import { ProfileDialog } from './components/ProfileDialog'
 import { TodayView } from './components/TodayView'
+import { MoreView } from './components/MoreView'
+import { LegalContent, type LegalPage } from './components/LegalContent'
 import { canEditDate, dateKey, progressForMonth, zonedDateKey } from './lib/date'
 import { addDemoExercise, archiveDemoExercise, loadDemoData, saveDemoData, saveDemoPlan, saveDemoTemplate, updateDemoProfile } from './lib/demoStore'
 import { archiveRemoteExercise, createRemoteExercise, loadCachedRemoteData, loadRemoteData, saveRemoteDayPlan, saveRemoteExerciseSettings, saveRemoteReflection, saveRemoteTemplate, setRemoteCompletion, toggleRemoteFavorite, updateRemoteProfile } from './lib/repository'
@@ -17,7 +19,7 @@ import { exerciseTarget, validateExerciseSettings } from './lib/exercise'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import type { AppData, BodyArea, DayDraft, DayExercise, Exercise, ExerciseCategory, ExerciseSettings, Profile } from './types'
 
-type View = 'today' | 'calendar' | 'library'
+type View = 'today' | 'calendar' | 'library' | 'more'
 type Overlay = 'day' | 'profile' | 'custom' | 'exercise' | null
 
 interface BeforeInstallPromptEvent extends Event {
@@ -38,7 +40,7 @@ function useOnline() {
 
 function viewFromUrl(): View {
   const value = new URLSearchParams(window.location.search).get('view')
-  return value === 'calendar' || value === 'library' ? value : 'today'
+  return value === 'calendar' || value === 'library' || value === 'more' ? value : 'today'
 }
 
 function dateFromUrl(): string | null {
@@ -112,6 +114,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
       window.history.pushState({ momentumOverlay: 'day' }, '', dayUrl)
     }
     const onPopState = (event: PopStateEvent) => {
+      setView(viewFromUrl())
       setOverlay((event.state?.momentumOverlay as Overlay) ?? null)
       const nextDate = dateFromUrl()
       if (nextDate) setSelectedDate(nextDate)
@@ -124,8 +127,10 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
     const url = new URL(window.location.href)
     if (next === 'today') url.searchParams.delete('view')
     else url.searchParams.set('view', next)
-    window.history.replaceState(window.history.state, '', url)
+    url.searchParams.delete('section')
+    window.history.replaceState({}, '', url)
     setView(next)
+    window.scrollTo(0, 0)
   }
 
   function openOverlay(next: Exclude<Overlay, null>, date?: string, editing = false) {
@@ -345,11 +350,13 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
       )}
       {view === 'calendar' && <CalendarView month={month} today={today} plans={data.plans} onMonthChange={setMonth} onSelectDate={(date) => openOverlay('day', date)} />}
       {view === 'library' && <LibraryView exercises={data.exercises} offline={!online} onToggleFavorite={toggleFavorite} onArchive={archiveExercise} onCreateCustom={() => openOverlay('custom')} onOpenExercise={(exercise) => { setSelectedExerciseId(exercise.id); openOverlay('exercise') }} />}
+      {view === 'more' && <MoreView appData={data} today={today} demo={isDemo} offline={!online} canInstall={Boolean(installPrompt && engaged)} onProfile={() => openOverlay('profile')} onInstall={install} onSignOut={() => { if (user) localStorage.removeItem(`momentum-remote-cache-${user.id}`); queryClient.clear(); onSignOut() }} />}
 
       <nav className="bottom-nav" aria-label="Main navigation">
         <button className={view === 'today' ? 'active' : ''} aria-current={view === 'today' ? 'page' : undefined} onClick={() => navigate('today')}><House aria-hidden="true" /><span>Today</span></button>
         <button className={view === 'calendar' ? 'active' : ''} aria-current={view === 'calendar' ? 'page' : undefined} onClick={() => navigate('calendar')}><CalendarDays aria-hidden="true" /><span>Calendar</span></button>
         <button className={view === 'library' ? 'active' : ''} aria-current={view === 'library' ? 'page' : undefined} onClick={() => navigate('library')}><Library aria-hidden="true" /><span>Library</span></button>
+        <button className={view === 'more' ? 'active' : ''} aria-current={view === 'more' ? 'page' : undefined} onClick={() => navigate('more')}><Ellipsis aria-hidden="true" /><span>More</span></button>
       </nav>
 
       {overlay === 'day' && (
@@ -369,7 +376,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
           onSaveTemplate={saveTemplate}
         />
       )}
-      <ProfileDialog open={overlay === 'profile'} profile={data.profile} canInstall={Boolean(installPrompt && engaged)} isDemo={isDemo} onOpenChange={(open) => { if (!open) closeOverlay() }} onSave={saveProfile} onInstall={install} onSignOut={onSignOut} />
+      {overlay === 'profile' && <ProfileDialog profile={data.profile} offline={!online} onClose={closeOverlay} onSave={saveProfile} />}
       <CustomExerciseDialog open={overlay === 'custom'} onOpenChange={(open) => { if (!open) closeOverlay() }} onSave={createExercise} />
       {overlay === 'exercise' && selectedExercise && <ExerciseDetail key={selectedExercise.id} exercise={selectedExercise} offline={!online} onClose={closeOverlay} onSave={saveExerciseSettings} />}
     </main>
@@ -377,6 +384,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
 }
 
 export default function App() {
+  const [legal, setLegal] = useState<LegalPage | null>(() => { const page = new URLSearchParams(location.search).get('legal'); return page === 'privacy' || page === 'terms' ? page : null })
   const [session, setSession] = useState<Session | null>(null)
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured)
   const [demo, setDemo] = useState(sessionStorage.getItem('momentum-demo-active') === '1')
@@ -393,6 +401,7 @@ export default function App() {
     return () => data.subscription.unsubscribe()
   }, [])
 
+  if (legal) return <main className="app-frame public-legal"><header className="more-heading"><button className="icon-button" aria-label="Back to Momentum" onClick={() => { const url = new URL(location.href); url.searchParams.delete('legal'); window.history.replaceState({}, '', url); setLegal(null) }}><ArrowLeft /></button><h1>{legal === 'privacy' ? 'Privacy policy' : 'Terms of use'}</h1></header><LegalContent page={legal} /></main>
   if (authLoading) return <main className="center-state"><span className="loading-orb" /><p>Opening Momentum…</p></main>
   if (!session && !demo) {
     return <AuthScreen recoveryMode={recoveryMode} onDemo={() => { sessionStorage.setItem('momentum-demo-active', '1'); setDemo(true) }} onAuthenticated={() => { void supabase?.auth.getSession().then(({ data }) => setSession(data.session)) }} />
