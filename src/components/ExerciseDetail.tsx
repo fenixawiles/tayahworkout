@@ -87,7 +87,7 @@ export function ExerciseDetail({ exercise, offline, onClose, onSave }: ExerciseD
   return (
     <Dialog.Root open onOpenChange={(open) => { if (!open) requestClose() }}>
       <Dialog.Portal>
-        <Dialog.Content className="full-panel exercise-detail" aria-describedby="exercise-settings-description" onOpenAutoFocus={(event) => event.preventDefault()}>
+        <Dialog.Content className="full-panel exercise-detail" aria-describedby="exercise-settings-description">
           <header className="panel-topbar">
             <button className="icon-button" aria-label="Back to library" disabled={busy} onClick={requestClose}><ArrowLeft /></button>
             <div><p className="eyebrow">EXERCISE LIBRARY</p><span>Your exercise</span></div>
