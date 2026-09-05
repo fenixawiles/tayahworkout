@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(24);
 
 insert into auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -24,6 +24,7 @@ select ok(not has_function_privilege('anon', 'public.save_day_plan(date,text,jso
 select ok(not has_function_privilege('anon', 'public.set_exercise_completion(uuid,boolean)', 'EXECUTE'), 'anonymous users cannot call the completion RPC');
 select ok(not has_function_privilege('anon', 'public.save_day_reflection(date,text)', 'EXECUTE'), 'anonymous users cannot call the reflection RPC');
 select ok(not has_function_privilege('anon', 'public.save_routine_template(text,jsonb)', 'EXECUTE'), 'anonymous users cannot call the template RPC');
+select ok(not has_function_privilege('anon', 'public.remove_exercise_from_library(uuid)', 'EXECUTE'), 'anonymous users cannot remove library exercises');
 select ok(not has_function_privilege('anon', 'public.handle_new_user()', 'EXECUTE'), 'anonymous users cannot call the profile trigger helper');
 select ok(not has_function_privilege('authenticated', 'public.handle_new_user()', 'EXECUTE'), 'signed-in users cannot call the profile trigger helper');
 select throws_like(

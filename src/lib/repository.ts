@@ -1,7 +1,6 @@
 import imageCompression from 'browser-image-compression'
 import type { User } from '@supabase/supabase-js'
 import type { AppData, BodyArea, DayDraft, DayExercise, DayPlan, Exercise, ExerciseCategory, ExerciseSettings, Profile, RoutineTemplate } from '../types'
-import { seedExercises } from '../data/seedExercises'
 import { supabase } from './supabase'
 
 const remoteCacheKey = (userId: string) => `momentum-remote-cache-${userId}`
@@ -104,7 +103,7 @@ export async function loadRemoteData(user: User): Promise<AppData> {
 
   const favorites = new Set((favoriteResult.data ?? []).map((item) => item.exercise_id))
   const preferences = new Map((preferenceResult.data ?? []).map((item) => [item.exercise_id, item]))
-  const exercises = await Promise.all(((exerciseResult.data ?? []) as ExerciseRow[]).map(async (row) => ({
+  const exercises = (await Promise.all(((exerciseResult.data ?? []) as ExerciseRow[]).map(async (row) => ({
     id: row.id,
     ownerId: row.owner_id,
     name: row.name,
@@ -118,7 +117,7 @@ export async function loadRemoteData(user: User): Promise<AppData> {
     imageUrl: await imageUrl(row.image_path),
     isFavorite: favorites.has(row.id),
     isCustom: row.owner_id === user.id,
-  } satisfies Exercise)))
+  } satisfies Exercise)))).filter((exercise) => !preferences.get(exercise.id)?.hidden_at)
 
   const plans = await Promise.all(((planResult.data ?? []) as DayPlanRow[]).map(async (row) => ({
     id: row.id,
@@ -146,7 +145,7 @@ export async function loadRemoteData(user: User): Promise<AppData> {
 
   const appData = {
     profile: { id: profileRow.id, displayName: profileRow.display_name, timeZone: profileRow.time_zone, username: profileRow.username, friendCode: profileRow.friend_code, usernameChangedAt: profileRow.username_changed_at, timezoneChangedAt: profileRow.timezone_changed_at },
-    exercises: exercises.length ? exercises : seedExercises(),
+    exercises,
     plans,
     templates,
   }
@@ -250,7 +249,7 @@ export async function createRemoteExercise(userId: string, input: {
 }
 
 export async function archiveRemoteExercise(exerciseId: string) {
-  const { error } = await supabase!.from('exercises').update({ archived_at: new Date().toISOString() }).eq('id', exerciseId)
+  const { error } = await supabase!.rpc('remove_exercise_from_library', { p_exercise_id: exerciseId })
   if (error) throw error
 }
 

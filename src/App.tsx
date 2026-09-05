@@ -11,6 +11,7 @@ import { ExerciseDetail } from './components/ExerciseDetail'
 import { ProfileDialog } from './components/ProfileDialog'
 import { TodayView } from './components/TodayView'
 import { MoreView } from './components/MoreView'
+import { NotificationCenter } from './components/NotificationCenter'
 import { LegalContent, type LegalPage } from './components/LegalContent'
 import { canEditDate, dateKey, progressForMonth, zonedDateKey } from './lib/date'
 import { addDemoExercise, archiveDemoExercise, loadDemoData, saveDemoData, saveDemoPlan, saveDemoTemplate, updateDemoProfile } from './lib/demoStore'
@@ -219,8 +220,8 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
     }
   }
 
-  async function archiveExercise(exercise: Exercise) {
-    if (!data || !exercise.isCustom) return
+  async function removeExercise(exercise: Exercise) {
+    if (!data) return
     if (isDemo) setData(archiveDemoExercise(data, exercise.id))
     else { await archiveRemoteExercise(exercise.id); await reload() }
   }
@@ -331,7 +332,10 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
 
   return (
     <main className="app-frame">
-      <div className="app-wordmark"><Activity aria-hidden="true" /><span>momentum</span></div>
+      <div className="global-appbar">
+        <div className="app-wordmark"><Activity aria-hidden="true" /><span>momentum</span></div>
+        <NotificationCenter profileId={data.profile.id} today={today} plan={todayPlan} demo={isDemo} offline={!online} onOpenToday={() => navigate('today')} />
+      </div>
       {!online && <div className="offline-banner" role="status"><WifiOff /> You’re offline. Your saved plan is view-only.</div>}
 
       {view === 'today' && (
@@ -349,7 +353,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
         />
       )}
       {view === 'calendar' && <CalendarView month={month} today={today} plans={data.plans} onMonthChange={setMonth} onSelectDate={(date) => openOverlay('day', date)} />}
-      {view === 'library' && <LibraryView exercises={data.exercises} offline={!online} onToggleFavorite={toggleFavorite} onArchive={archiveExercise} onCreateCustom={() => openOverlay('custom')} onOpenExercise={(exercise) => { setSelectedExerciseId(exercise.id); openOverlay('exercise') }} />}
+      {view === 'library' && <LibraryView exercises={data.exercises} offline={!online} onToggleFavorite={toggleFavorite} onRemove={removeExercise} onCreateCustom={() => openOverlay('custom')} onOpenExercise={(exercise) => { setSelectedExerciseId(exercise.id); openOverlay('exercise') }} />}
       {view === 'more' && <MoreView appData={data} today={today} demo={isDemo} offline={!online} canInstall={Boolean(installPrompt && engaged)} onProfile={() => openOverlay('profile')} onInstall={install} onSignOut={() => { if (user) localStorage.removeItem(`momentum-remote-cache-${user.id}`); queryClient.clear(); onSignOut() }} />}
 
       <nav className="bottom-nav" aria-label="Main navigation">

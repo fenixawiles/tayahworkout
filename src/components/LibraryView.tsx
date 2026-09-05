@@ -1,8 +1,9 @@
-import { Archive, ArrowUpRight, Heart, Plus, Search } from 'lucide-react'
+import { ArrowUpRight, Heart, Plus, Search, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { BodyArea, Exercise, ExerciseCategory } from '../types'
 import { bodyAreaLabel, exerciseTarget } from '../lib/exercise'
 import { ExerciseThumb } from './ExerciseThumb'
+import { ConfirmAction, type Confirmation } from './ConfirmAction'
 
 type Filter = 'all' | 'favorites' | ExerciseCategory | BodyArea
 
@@ -10,7 +11,7 @@ interface LibraryViewProps {
   exercises: Exercise[]
   offline: boolean
   onToggleFavorite: (exercise: Exercise) => void
-  onArchive: (exercise: Exercise) => void
+  onRemove: (exercise: Exercise) => Promise<void>
   onCreateCustom: () => void
   onOpenExercise: (exercise: Exercise) => void
 }
@@ -29,9 +30,10 @@ const filters: Array<{ value: Filter; label: string }> = [
   { value: 'recovery', label: 'Recovery' },
 ]
 
-export function LibraryView({ exercises, offline, onToggleFavorite, onArchive, onCreateCustom, onOpenExercise }: LibraryViewProps) {
+export function LibraryView({ exercises, offline, onToggleFavorite, onRemove, onCreateCustom, onOpenExercise }: LibraryViewProps) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
+  const [confirm, setConfirm] = useState<Confirmation | null>(null)
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase()
     return exercises.filter((exercise) => {
@@ -87,13 +89,19 @@ export function LibraryView({ exercises, offline, onToggleFavorite, onArchive, o
               >
                 <Heart aria-hidden="true" />
               </button>
-              {exercise.isCustom && <button className="archive-button" aria-label={`Archive ${exercise.name}`} disabled={offline} onClick={() => { if (window.confirm(`Archive ${exercise.name}? Saved workout history will keep its snapshot.`)) onArchive(exercise) }}><Archive aria-hidden="true" /></button>}
+              <button className="archive-button" aria-label={`Remove ${exercise.name} from library`} disabled={offline} onClick={() => setConfirm({
+                title: `Remove ${exercise.name}?`,
+                description: 'This removes it from your library. Saved workout days and routines keep their existing copies.',
+                label: 'Remove exercise',
+                action: () => onRemove(exercise),
+              })}><Trash2 aria-hidden="true" /></button>
             </div>
           </article>
         ))}
         {visible.length === 0 && <div className="empty-card"><Search /><h2>No exercises found</h2><p>Try a different search or filter.</p></div>}
       </div>
       <p className="library-credit">Exercise imagery adapted from Free Exercise DB, released to the public domain.</p>
+      <ConfirmAction value={confirm} onClose={() => setConfirm(null)} />
     </section>
   )
 }

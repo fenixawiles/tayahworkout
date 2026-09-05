@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(19);
 
 insert into auth.users (id, aud, role, email, raw_user_meta_data)
 values
@@ -38,5 +38,24 @@ select lives_ok($$
 $$, 'another account can use independent optional defaults for the same exercise');
 select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333331', true);
 select is((select target from public.exercise_preferences), '4 × 8', 'another account changes do not affect the first user');
+select lives_ok(
+  $$ select public.remove_exercise_from_library('00000000-0000-4000-8000-000000000001') $$,
+  'a user can remove a shared exercise from their own library'
+);
+select ok((select hidden_at is not null from public.exercise_preferences where exercise_id = '00000000-0000-4000-8000-000000000001'), 'shared removal is stored as a personal preference');
+select is((select archived_at from public.exercises where id = '00000000-0000-4000-8000-000000000001'), null, 'a shared exercise is not archived for everyone');
+select throws_like(
+  $$ select public.remove_exercise_from_library('33333333-3333-4333-8333-333333333339') $$,
+  '%Exercise not available%',
+  'a user cannot remove another account custom exercise'
+);
+select ok(not has_function_privilege('anon', 'public.remove_exercise_from_library(uuid)', 'EXECUTE'), 'anonymous exercise removal is denied');
+
+select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333332', true);
+select lives_ok(
+  $$ select public.remove_exercise_from_library('33333333-3333-4333-8333-333333333339') $$,
+  'an owner can remove their custom exercise'
+);
+select ok((select archived_at is not null from public.exercises where id = '33333333-3333-4333-8333-333333333339'), 'custom removal archives the source record');
 select * from finish();
 rollback;

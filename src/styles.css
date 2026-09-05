@@ -81,7 +81,8 @@ h2 { font-size: 1.16rem; line-height: 1.25; letter-spacing: -.022em; }
 }
 .topbar { margin-bottom: 22px; }
 .eyebrow { color: var(--muted); font-size: .75rem; font-weight: 750; letter-spacing: .12em; }
-.app-wordmark { display: flex; align-items: center; gap: 7px; margin-bottom: 23px; font-size: 1rem; font-weight: 850; letter-spacing: -.055em; }
+.global-appbar { display: flex; min-height: 48px; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 23px; }
+.app-wordmark { display: flex; align-items: center; gap: 7px; font-size: 1rem; font-weight: 850; letter-spacing: -.055em; }
 .app-wordmark svg { width: 20px; height: 20px; color: var(--primary); }
 .topbar h1 { margin-top: 6px; font-size: clamp(1.6rem, 6.8vw, 2.1rem); }
 
@@ -175,6 +176,7 @@ h2 { font-size: 1.16rem; line-height: 1.25; letter-spacing: -.022em; }
 .exercise-copy > span { color: var(--muted); font-size: .875rem; line-height: 1.4; overflow-wrap: anywhere; }
 .exercise-copy small { color: #9995a5; font-size: .76rem; }
 .check-button {
+  position: relative;
   display: grid;
   width: 48px;
   height: 48px;
@@ -192,6 +194,9 @@ h2 { font-size: 1.16rem; line-height: 1.25; letter-spacing: -.022em; }
 .check-button.checked svg { z-index: 1; color: white; stroke-width: 3; }
 .check-button:disabled::before { display: none; }
 .check-button:disabled svg { position: static; width: 17px; height: 17px; }
+
+.notification-bell { position: relative; width: 44px; height: 44px; background: #fffdfb; }
+.notification-badge { position: absolute; top: -4px; right: -4px; display: grid; min-width: 21px; height: 21px; padding: 0 5px; place-items: center; border: 2px solid var(--canvas); border-radius: 99px; color: white; font-size: .68rem; font-weight: 850; line-height: 1; background: var(--danger); }
 
 .primary-button, .secondary-button, .add-exercise-button {
   display: flex;
@@ -663,6 +668,22 @@ h2 { font-size: 1.16rem; line-height: 1.25; letter-spacing: -.022em; }
 .preference-switch i::after { content: ''; display: block; width: 24px; height: 24px; border-radius: 50%; background: white; box-shadow: 0 2px 5px #0002; transition: transform 160ms ease; }
 .preference-switch i.on { background: var(--mint); }
 .preference-switch i.on::after { transform: translateX(20px); }
+.notification-panel { background: var(--canvas); }
+.notification-body { padding: 18px max(20px, env(safe-area-inset-right, 0px)) calc(42px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left, 0px)); }
+.notification-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 4px; border: 1px solid var(--line); border-radius: 17px; background: #eee7ef; }
+.notification-tabs button { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 7px; padding: 6px 9px; border: 0; border-radius: 12px; color: var(--muted); font-size: .875rem; font-weight: 760; background: transparent; }
+.notification-tabs button.selected { color: white; background: var(--primary); box-shadow: 0 2px 5px #45284626; }
+.notification-tabs span { display: inline-grid; min-width: 20px; height: 20px; padding: 0 5px; place-items: center; border-radius: 99px; color: var(--primary-dark); font-size: .7rem; background: #fff9; }
+.notification-list { display: grid; gap: 12px; margin-top: 18px; }
+.notification-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 15px; border: 1px solid var(--line); border-radius: 10px 22px 22px 22px; background: white; box-shadow: 0 3px 0 #eae2e666; }
+.notification-card > div:nth-child(2) { display: grid; min-width: 0; gap: 4px; }
+.notification-card small { color: var(--muted); font-size: .875rem; line-height: 1.45; }
+.notification-actions { display: flex; grid-column: 1 / -1; align-items: center; gap: 8px; }
+.notification-actions .secondary-button { min-width: 128px; }
+.notification-symbol { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 16px; color: #8b4b1b; background: #fff0de; }
+.notification-symbol svg { width: 22px; }
+.reminder-card > .secondary-button { grid-column: 1 / -1; width: 100%; }
+.notification-footnote { padding: 2px 8px; color: var(--muted); font-size: .8125rem; line-height: 1.5; }
 .legal-content { padding-bottom: 20px; color: #554a59; font-size: 1rem; line-height: 1.65; }
 .legal-content h2 { margin: 28px 0 7px; color: var(--ink); font-size: 1.15rem; }
 .legal-content p + p { margin-top: 12px; }

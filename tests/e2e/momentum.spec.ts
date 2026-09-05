@@ -20,6 +20,26 @@ test('keeps Today focused and free of horizontal overflow', async ({ page }) => 
   expect(await page.locator('.app-frame').evaluate((element) => parseFloat(getComputedStyle(element).paddingTop))).toBeGreaterThanOrEqual(12)
 })
 
+test('centers the completion check and clears the in-app notification badge', async ({ page }) => {
+  const completion = page.locator('.exercise-card').filter({ hasText: 'Goblet squat' }).locator('.check-button')
+  await expect(completion).toHaveAccessibleName(/Mark Goblet squat complete/)
+  await completion.click()
+  const buttonBox = await completion.boundingBox()
+  const checkBox = await completion.locator('svg').boundingBox()
+  expect(Math.abs((buttonBox!.x + buttonBox!.width / 2) - (checkBox!.x + checkBox!.width / 2))).toBeLessThan(1)
+  expect(Math.abs((buttonBox!.y + buttonBox!.height / 2) - (checkBox!.y + checkBox!.height / 2))).toBeLessThan(1)
+
+  const bell = page.getByRole('button', { name: /Open notifications, 1 unread/ })
+  await expect(bell).toBeVisible()
+  await bell.click()
+  await expect(page.getByRole('dialog', { name: 'Notifications' })).toBeVisible()
+  await expect(page.locator('.notification-badge')).toHaveCount(0)
+  await page.getByRole('tab', { name: /Reminders/ }).click()
+  await expect(page.getByText(/of 3 exercises complete/)).toBeVisible()
+  await page.getByRole('button', { name: 'Close notifications' }).click()
+  await expect(page.getByRole('button', { name: 'Open notifications', exact: true })).toBeVisible()
+})
+
 test('keeps friends, challenges, profile, and policies calm inside More', async ({ page }) => {
   await page.getByRole('button', { name: 'More', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'A little more.' })).toBeVisible()
@@ -104,6 +124,18 @@ test('keeps calendar and library usable at Android viewports', async ({ page }) 
   await expect(page.getByRole('dialog', { name: 'Choose a category' })).toBeHidden()
   await expect(page.getByRole('dialog', { name: 'Create an exercise' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
+
+test('lets the user remove any library exercise without changing saved workout history', async ({ page }) => {
+  await page.getByRole('button', { name: 'Library', exact: true }).click()
+  await expect(page.locator('.library-card')).toHaveCount(24)
+  await page.getByRole('button', { name: 'Remove Goblet squat from library' }).click()
+  await expect(page.getByRole('alertdialog', { name: 'Remove Goblet squat?' })).toBeVisible()
+  await page.getByRole('button', { name: 'Remove exercise' }).click()
+  await expect(page.locator('.library-card')).toHaveCount(23)
+  await expect(page.getByRole('button', { name: 'Edit Goblet squat' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Today', exact: true }).click()
+  await expect(page.locator('.exercise-card').filter({ hasText: 'Goblet squat' })).toBeVisible()
 })
 
 test('saves personal reps and weight, reloads them, and snapshots them only into new additions', async ({ page }) => {

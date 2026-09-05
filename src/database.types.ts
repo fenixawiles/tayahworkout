@@ -27,9 +27,9 @@ export interface Database {
         Relationships: [{ foreignKeyName: 'exercise_favorites_exercise_id_fkey'; columns: ['exercise_id']; isOneToOne: false; referencedRelation: 'exercises'; referencedColumns: ['id'] }]
       }
       exercise_preferences: {
-        Row: { user_id: string; exercise_id: string; target: string; weight: number | null; weight_unit: 'lb' | 'kg'; updated_at: string }
-        Insert: { user_id: string; exercise_id: string; target?: string; weight?: number | null; weight_unit?: 'lb' | 'kg'; updated_at?: string }
-        Update: { user_id?: string; exercise_id?: string; target?: string; weight?: number | null; weight_unit?: 'lb' | 'kg'; updated_at?: string }
+        Row: { user_id: string; exercise_id: string; target: string; weight: number | null; weight_unit: 'lb' | 'kg'; hidden_at: string | null; updated_at: string }
+        Insert: { user_id: string; exercise_id: string; target?: string; weight?: number | null; weight_unit?: 'lb' | 'kg'; hidden_at?: string | null; updated_at?: string }
+        Update: { user_id?: string; exercise_id?: string; target?: string; weight?: number | null; weight_unit?: 'lb' | 'kg'; hidden_at?: string | null; updated_at?: string }
         Relationships: [{ foreignKeyName: 'exercise_preferences_exercise_id_fkey'; columns: ['exercise_id']; isOneToOne: false; referencedRelation: 'exercises'; referencedColumns: ['id'] }]
       }
       day_plans: {
@@ -91,6 +91,7 @@ export interface Database {
       review_community_case: { Args: { p_id: string; p_kind: string; p_status: string; p_response: string; p_restrict?: boolean }; Returns: undefined }
       get_account_settings: { Args: Record<string, never>; Returns: Json }
       set_workout_reminder: { Args: { p_enabled: boolean }; Returns: undefined }
+      remove_exercise_from_library: { Args: { p_exercise_id: string }; Returns: undefined }
     }
     Enums: { exercise_category: Category; body_area: BodyArea }
     CompositeTypes: Record<never, never>
