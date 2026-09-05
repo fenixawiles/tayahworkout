@@ -11,14 +11,17 @@ export function ProgressCard({ monthLabel, completed, total }: ProgressCardProps
       <div className="progress-copy">
         <div>
           <p className="eyebrow">{monthLabel.toUpperCase()}</p>
-          <h2 id="month-progress-title">{total ? completed === total ? 'Month complete' : 'You’re building momentum' : 'Plan your first workout'}</h2>
+          <h2 id="month-progress-title">{total ? completed === total ? 'You made it happen.' : 'Every rep adds up.' : 'Plan your first workout'}</h2>
         </div>
         {total > 0 && <strong>{completed} <span>of {total}</span></strong>}
       </div>
       {total > 0 && (
-        <div className="progress-track" role="progressbar" aria-label={`${completed} of ${total} exercises complete`} aria-valuemin={0} aria-valuemax={total} aria-valuenow={completed}>
-          <span style={{ width: `${percent}%` }} />
-        </div>
+        <>
+          <div className="progress-track" role="progressbar" aria-label={`${completed} of ${total} exercises complete`} aria-valuemin={0} aria-valuemax={total} aria-valuenow={completed}>
+            <span style={{ width: `${percent}%` }} />
+          </div>
+          <div className="progress-footnote"><span>Your month in motion</span><span>Exercises completed</span></div>
+        </>
       )}
     </section>
   )

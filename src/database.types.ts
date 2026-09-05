@@ -26,6 +26,12 @@ export interface Database {
         Update: { user_id?: string; exercise_id?: string; created_at?: string }
         Relationships: [{ foreignKeyName: 'exercise_favorites_exercise_id_fkey'; columns: ['exercise_id']; isOneToOne: false; referencedRelation: 'exercises'; referencedColumns: ['id'] }]
       }
+      exercise_preferences: {
+        Row: { user_id: string; exercise_id: string; target: string; weight: number | null; weight_unit: 'lb' | 'kg'; updated_at: string }
+        Insert: { user_id: string; exercise_id: string; target?: string; weight?: number | null; weight_unit?: 'lb' | 'kg'; updated_at?: string }
+        Update: { user_id?: string; exercise_id?: string; target?: string; weight?: number | null; weight_unit?: 'lb' | 'kg'; updated_at?: string }
+        Relationships: [{ foreignKeyName: 'exercise_preferences_exercise_id_fkey'; columns: ['exercise_id']; isOneToOne: false; referencedRelation: 'exercises'; referencedColumns: ['id'] }]
+      }
       day_plans: {
         Row: { id: string; user_id: string; plan_date: string; title: string; reflection: string; created_at: string; updated_at: string }
         Insert: { id?: string; user_id: string; plan_date: string; title?: string; reflection?: string; created_at?: string; updated_at?: string }

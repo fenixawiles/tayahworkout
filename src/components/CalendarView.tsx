@@ -1,5 +1,5 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { format, isSameMonth } from 'date-fns'
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
+import { format, isSameMonth, parseISO } from 'date-fns'
 import type { DayPlan } from '../types'
 import { dateKey, monthGrid, planState, shiftMonth } from '../lib/date'
 
@@ -16,6 +16,7 @@ const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 export function CalendarView({ month, today, plans, onMonthChange, onSelectDate }: CalendarViewProps) {
   const plansByDate = new Map(plans.map((plan) => [plan.date, plan]))
   const days = monthGrid(month)
+  const monthPlans = plans.filter((plan) => plan.date.startsWith(format(month, 'yyyy-MM')) && plan.exercises.length).sort((a, b) => a.date.localeCompare(b.date))
 
   return (
     <section className="view-section calendar-view" aria-labelledby="calendar-title">
@@ -48,7 +49,7 @@ export function CalendarView({ month, today, plans, onMonthChange, onSelectDate 
                 onClick={() => onSelectDate(key)}
               >
                 <span className="day-number">{format(day, 'd')}</span>
-                {plan && plan.exercises.length > 0 && <span className="day-marker" aria-hidden="true" />}
+                {plan && plan.exercises.length > 0 && <span className="day-marker" aria-hidden="true">{state === 'complete' && <Check />}</span>}
               </button>
             )
           })}
@@ -60,6 +61,14 @@ export function CalendarView({ month, today, plans, onMonthChange, onSelectDate 
         <span><i className="key-dot complete" /> Complete</span>
         <span><i className="key-dot missed" /> Missed</span>
       </div>
+      {monthPlans.length > 0 && <section className="calendar-agenda" aria-labelledby="agenda-title">
+        <div className="section-heading"><h2 id="agenda-title">On your calendar</h2><span className="section-count">{monthPlans.length} days</span></div>
+        <div className="agenda-list">{monthPlans.map((plan) => <button className="agenda-row" key={plan.id} onClick={() => onSelectDate(plan.date)}>
+          <span className="agenda-date"><small>{format(parseISO(plan.date), 'EEE')}</small><b>{format(parseISO(plan.date), 'dd')}</b></span>
+          <span className="exercise-copy"><strong>{plan.title}</strong><span>{plan.exercises.filter((item) => item.completedAt).length} of {plan.exercises.length} complete</span></span>
+          <ChevronRight aria-hidden="true" />
+        </button>)}</div>
+      </section>}
     </section>
   )
 }

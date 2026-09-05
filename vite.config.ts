@@ -31,8 +31,8 @@ export default defineConfig({
         start_url: '/tayahworkout/',
         scope: '/tayahworkout/',
         display: 'standalone',
-        background_color: '#f6f6fb',
-        theme_color: '#f6f6fb',
+        background_color: '#f8f5f2',
+        theme_color: '#f8f5f2',
         categories: ['fitness', 'health'],
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

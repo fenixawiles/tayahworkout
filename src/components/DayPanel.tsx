@@ -5,7 +5,7 @@ import { addDays, format, parseISO } from 'date-fns'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { DayDraft, DayExercise, DayPlan, Exercise, RoutineTemplate } from '../types'
 import { canEditDate } from '../lib/date'
-import { bodyAreaLabel } from '../lib/exercise'
+import { bodyAreaLabel, exerciseTarget } from '../lib/exercise'
 import { ExerciseCard } from './ExerciseCard'
 import { ExercisePicker } from './ExercisePicker'
 import { ExerciseThumb } from './ExerciseThumb'
@@ -109,7 +109,7 @@ export function DayPanel({ open, date, today, plan, exercises, templates, offlin
         bodyArea: exercise.bodyArea,
         imagePath: exercise.imagePath,
         imageUrl: exercise.imageUrl,
-        target: exercise.defaultTarget,
+        target: exerciseTarget(exercise),
         notes: '',
         sortOrder: value.exercises.length,
         completedAt: null,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { CalendarDays, House, Library, WifiOff } from 'lucide-react'
+import { Activity, CalendarDays, House, Library, WifiOff } from 'lucide-react'
 import type { Session, User } from '@supabase/supabase-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { AuthScreen } from './components/AuthScreen'
@@ -7,16 +7,18 @@ import { CalendarView } from './components/CalendarView'
 import { CustomExerciseDialog } from './components/CustomExerciseDialog'
 import { DayPanel } from './components/DayPanel'
 import { LibraryView } from './components/LibraryView'
+import { ExerciseDetail } from './components/ExerciseDetail'
 import { ProfileDialog } from './components/ProfileDialog'
 import { TodayView } from './components/TodayView'
 import { canEditDate, dateKey, progressForMonth, zonedDateKey } from './lib/date'
 import { addDemoExercise, archiveDemoExercise, loadDemoData, saveDemoData, saveDemoPlan, saveDemoTemplate, updateDemoProfile } from './lib/demoStore'
-import { archiveRemoteExercise, createRemoteExercise, loadCachedRemoteData, loadRemoteData, saveRemoteDayPlan, saveRemoteReflection, saveRemoteTemplate, setRemoteCompletion, toggleRemoteFavorite, updateRemoteProfile } from './lib/repository'
+import { archiveRemoteExercise, createRemoteExercise, loadCachedRemoteData, loadRemoteData, saveRemoteDayPlan, saveRemoteExerciseSettings, saveRemoteReflection, saveRemoteTemplate, setRemoteCompletion, toggleRemoteFavorite, updateRemoteProfile } from './lib/repository'
+import { exerciseTarget, validateExerciseSettings } from './lib/exercise'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
-import type { AppData, BodyArea, DayDraft, DayExercise, Exercise, ExerciseCategory, Profile } from './types'
+import type { AppData, BodyArea, DayDraft, DayExercise, Exercise, ExerciseCategory, ExerciseSettings, Profile } from './types'
 
 type View = 'today' | 'calendar' | 'library'
-type Overlay = 'day' | 'profile' | 'custom' | null
+type Overlay = 'day' | 'profile' | 'custom' | 'exercise' | null
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -69,6 +71,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
   const [month, setMonth] = useState(new Date())
   const [overlay, setOverlay] = useState<Overlay>(dateFromUrl() ? 'day' : null)
   const [selectedDate, setSelectedDate] = useState(dateFromUrl() ?? dateKey(new Date()))
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null)
   const [startEditing, setStartEditing] = useState(false)
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [engaged, setEngaged] = useState(localStorage.getItem('momentum-engaged') === '1')
@@ -217,6 +220,19 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
     else { await archiveRemoteExercise(exercise.id); await reload() }
   }
 
+  async function saveExerciseSettings(exercise: Exercise, settings: ExerciseSettings) {
+    if (!data || !navigator.onLine) throw new Error('Reconnect to save your exercise.')
+    const invalid = validateExerciseSettings(settings)
+    if (invalid) throw new Error(invalid)
+    if (!isDemo) await saveRemoteExerciseSettings(user!.id, exercise.id, settings)
+    const next = { ...data, exercises: data.exercises.map((item) => item.id === exercise.id ? {
+      ...item, defaultTarget: settings.target, defaultWeight: settings.weight, defaultWeightUnit: settings.weightUnit,
+    } : item) }
+    if (isDemo) saveDemoData(next)
+    else localStorage.setItem(`momentum-remote-cache-${user!.id}`, JSON.stringify(next))
+    setData(next)
+  }
+
   async function saveTemplate(name: string, plan: AppData['plans'][number]) {
     if (!data) return
     if (isDemo) setData(saveDemoTemplate(data, name, plan))
@@ -240,6 +256,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
   const todayPlan = data?.plans.find((plan) => plan.date === today)
   const currentProgress = data ? progressForMonth(data.plans, new Date(`${today}T12:00:00`)) : { completed: 0, total: 0 }
   const selectedPlan = data?.plans.find((plan) => plan.date === selectedDate)
+  const selectedExercise = data?.exercises.find((exercise) => exercise.id === selectedExerciseId)
 
   useEffect(() => {
     const context = document.modelContext
@@ -290,7 +307,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
             bodyArea: exercise!.bodyArea,
             imagePath: exercise!.imagePath,
             imageUrl: exercise!.imageUrl,
-            target: exercise!.defaultTarget,
+            target: exerciseTarget(exercise!),
             notes: '',
             sortOrder: index,
             completedAt: null,
@@ -309,6 +326,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
 
   return (
     <main className="app-frame">
+      <div className="app-wordmark"><Activity aria-hidden="true" /><span>momentum</span></div>
       {!online && <div className="offline-banner" role="status"><WifiOff /> You’re offline. Your saved plan is view-only.</div>}
 
       {view === 'today' && (
@@ -326,7 +344,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
         />
       )}
       {view === 'calendar' && <CalendarView month={month} today={today} plans={data.plans} onMonthChange={setMonth} onSelectDate={(date) => openOverlay('day', date)} />}
-      {view === 'library' && <LibraryView exercises={data.exercises} offline={!online} onToggleFavorite={toggleFavorite} onArchive={archiveExercise} onCreateCustom={() => openOverlay('custom')} />}
+      {view === 'library' && <LibraryView exercises={data.exercises} offline={!online} onToggleFavorite={toggleFavorite} onArchive={archiveExercise} onCreateCustom={() => openOverlay('custom')} onOpenExercise={(exercise) => { setSelectedExerciseId(exercise.id); openOverlay('exercise') }} />}
 
       <nav className="bottom-nav" aria-label="Main navigation">
         <button className={view === 'today' ? 'active' : ''} aria-current={view === 'today' ? 'page' : undefined} onClick={() => navigate('today')}><House aria-hidden="true" /><span>Today</span></button>
@@ -353,6 +371,7 @@ function MomentumApp({ user, isDemo, onSignOut }: MomentumAppProps) {
       )}
       <ProfileDialog open={overlay === 'profile'} profile={data.profile} canInstall={Boolean(installPrompt && engaged)} isDemo={isDemo} onOpenChange={(open) => { if (!open) closeOverlay() }} onSave={saveProfile} onInstall={install} onSignOut={onSignOut} />
       <CustomExerciseDialog open={overlay === 'custom'} onOpenChange={(open) => { if (!open) closeOverlay() }} onSave={createExercise} />
+      {overlay === 'exercise' && selectedExercise && <ExerciseDetail key={selectedExercise.id} exercise={selectedExercise} offline={!online} onClose={closeOverlay} onSave={saveExerciseSettings} />}
     </main>
   )
 }

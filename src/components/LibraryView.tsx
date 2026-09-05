@@ -1,7 +1,7 @@
-import { Archive, Heart, Plus, Search } from 'lucide-react'
+import { Archive, ArrowUpRight, Heart, Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { BodyArea, Exercise, ExerciseCategory } from '../types'
-import { bodyAreaLabel } from '../lib/exercise'
+import { bodyAreaLabel, exerciseTarget } from '../lib/exercise'
 import { ExerciseThumb } from './ExerciseThumb'
 
 type Filter = 'all' | 'favorites' | ExerciseCategory | BodyArea
@@ -12,6 +12,7 @@ interface LibraryViewProps {
   onToggleFavorite: (exercise: Exercise) => void
   onArchive: (exercise: Exercise) => void
   onCreateCustom: () => void
+  onOpenExercise: (exercise: Exercise) => void
 }
 
 const filters: Array<{ value: Filter; label: string }> = [
@@ -28,7 +29,7 @@ const filters: Array<{ value: Filter; label: string }> = [
   { value: 'recovery', label: 'Recovery' },
 ]
 
-export function LibraryView({ exercises, offline, onToggleFavorite, onArchive, onCreateCustom }: LibraryViewProps) {
+export function LibraryView({ exercises, offline, onToggleFavorite, onArchive, onCreateCustom, onOpenExercise }: LibraryViewProps) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const visible = useMemo(() => {
@@ -46,8 +47,8 @@ export function LibraryView({ exercises, offline, onToggleFavorite, onArchive, o
     <section className="view-section library-view" aria-labelledby="library-title">
       <div className="library-heading">
         <div>
-          <p className="eyebrow">MOVE YOUR WAY</p>
-          <h1 id="library-title">Exercise library</h1>
+          <p className="eyebrow">YOUR MOVEMENT MENU</p>
+          <h1 id="library-title">The library<span className="heading-dot">.</span></h1>
         </div>
         <button className="round-primary" aria-label="Create custom exercise" onClick={onCreateCustom} disabled={offline}><Plus /></button>
       </div>
@@ -55,23 +56,27 @@ export function LibraryView({ exercises, offline, onToggleFavorite, onArchive, o
       <label className="search-field">
         <Search aria-hidden="true" />
         <span className="sr-only">Search exercises</span>
-        <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search exercises" />
+        <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search a name or focus tag" />
       </label>
 
       <div className="filter-scroller" aria-label="Filter exercises">
         {filters.map((item) => (
-          <button key={item.value} className={filter === item.value ? 'active' : ''} onClick={() => setFilter(item.value)}>{item.label}</button>
+          <button key={item.value} className={filter === item.value ? 'active' : ''} aria-pressed={filter === item.value} onClick={() => setFilter(item.value)}>{item.label}</button>
         ))}
       </div>
 
+      <div className="library-list-heading"><span>{visible.length} exercises</span><span>Tap to make it yours <ArrowUpRight aria-hidden="true" /></span></div>
       <div className="library-list">
         {visible.map((exercise) => (
-          <article className="library-card" key={exercise.id}>
-            <ExerciseThumb src={exercise.imageUrl} name={exercise.name} category={exercise.category} />
-            <div className="exercise-copy">
-              <strong>{exercise.name}</strong>
-              <span>{exercise.defaultTarget} · {bodyAreaLabel(exercise.bodyArea)}</span>
-            </div>
+          <article className={`library-card focus-${exercise.bodyArea}`} key={exercise.id}>
+            <button className="library-exercise-button" onClick={() => onOpenExercise(exercise)} aria-label={`Edit ${exercise.name}`}>
+              <ExerciseThumb src={exercise.imageUrl} name={exercise.name} category={exercise.category} />
+              <span className="exercise-copy">
+                <span className={`focus-tag focus-${exercise.bodyArea}`}>{bodyAreaLabel(exercise.bodyArea)}</span>
+                <strong>{exercise.name}</strong>
+                <span className="exercise-prescription">{exerciseTarget(exercise) || 'Set your reps & weight'}</span>
+              </span>
+            </button>
             <div className="library-card-actions">
               <button
                 className={`favorite-button ${exercise.isFavorite ? 'active' : ''}`}

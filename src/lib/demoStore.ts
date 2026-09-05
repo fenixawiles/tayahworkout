@@ -1,5 +1,6 @@
 import { addDays, format } from 'date-fns'
 import { seedExercises } from '../data/seedExercises'
+import { exerciseTarget } from './exercise'
 import type { AppData, DayDraft, DayExercise, DayPlan, Exercise, Profile, RoutineTemplate } from '../types'
 
 const STORAGE_KEY = 'momentum-demo-data-v1'
@@ -13,7 +14,7 @@ function exerciseItem(exercise: Exercise, index: number, complete = false): DayE
     bodyArea: exercise.bodyArea,
     imagePath: exercise.imagePath,
     imageUrl: exercise.imageUrl,
-    target: exercise.defaultTarget,
+    target: exerciseTarget(exercise),
     notes: '',
     sortOrder: index,
     completedAt: complete ? new Date().toISOString() : null,
@@ -77,7 +78,10 @@ export function loadDemoData(): AppData {
   }
   const parsed = JSON.parse(saved) as AppData
   const seedById = new Map(seedExercises().map((item) => [item.id, item]))
-  parsed.exercises = parsed.exercises.map((item) => seedById.get(item.id) ?? { ...item, bodyArea: item.bodyArea ?? 'full-body' })
+  parsed.exercises = parsed.exercises.map((item) => {
+    const seed = seedById.get(item.id)
+    return { ...seed, ...item, bodyArea: item.bodyArea ?? seed?.bodyArea ?? 'full-body', imageUrl: seed?.imageUrl ?? item.imageUrl }
+  })
   parsed.plans = parsed.plans.map((plan) => ({
     ...plan,
     exercises: plan.exercises.map((item) => ({

@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { Search, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { Exercise } from '../types'
-import { bodyAreaLabel, bodyAreaLabels } from '../lib/exercise'
+import { bodyAreaLabel, bodyAreaLabels, exerciseTarget } from '../lib/exercise'
 import { ExerciseThumb } from './ExerciseThumb'
 
 interface ExercisePickerProps {
@@ -45,7 +45,7 @@ export function ExercisePicker({ open, exercises, onOpenChange, onPick }: Exerci
             {visible.map((exercise) => (
               <button key={exercise.id} className="picker-row" onClick={() => { onPick(exercise); onOpenChange(false) }}>
                 <ExerciseThumb src={exercise.imageUrl} name={exercise.name} category={exercise.category} />
-                <span className="exercise-copy"><strong>{exercise.name}</strong><span>{exercise.defaultTarget} · {bodyAreaLabel(exercise.bodyArea)}</span></span>
+                <span className="exercise-copy"><strong>{exercise.name}</strong><span>{exerciseTarget(exercise) || bodyAreaLabel(exercise.bodyArea)}</span></span>
               </button>
             ))}
           </div>

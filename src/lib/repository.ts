@@ -1,6 +1,6 @@
 import imageCompression from 'browser-image-compression'
 import type { User } from '@supabase/supabase-js'
-import type { AppData, BodyArea, DayDraft, DayExercise, DayPlan, Exercise, ExerciseCategory, Profile, RoutineTemplate } from '../types'
+import type { AppData, BodyArea, DayDraft, DayExercise, DayPlan, Exercise, ExerciseCategory, ExerciseSettings, Profile, RoutineTemplate } from '../types'
 import { seedExercises } from '../data/seedExercises'
 import { supabase } from './supabase'
 
@@ -85,15 +85,16 @@ async function mapDayExercise(row: DayExerciseRow): Promise<DayExercise> {
 export async function loadRemoteData(user: User): Promise<AppData> {
   if (!supabase) throw new Error('Supabase is not configured.')
 
-  const [profileResult, exerciseResult, favoriteResult, planResult, templateResult] = await Promise.all([
+  const [profileResult, exerciseResult, favoriteResult, planResult, templateResult, preferenceResult] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('exercises').select('*').is('archived_at', null).order('name'),
     supabase.from('exercise_favorites').select('exercise_id').eq('user_id', user.id),
     supabase.from('day_plans').select('*, day_exercises(*, exercise_completions(completed_at))').order('plan_date'),
     supabase.from('routine_templates').select('*, routine_template_items(*)').order('created_at'),
+    supabase.from('exercise_preferences').select('*').eq('user_id', user.id),
   ])
 
-  const firstError = [profileResult, exerciseResult, favoriteResult, planResult, templateResult].find((result) => result.error)?.error
+  const firstError = [profileResult, exerciseResult, favoriteResult, planResult, templateResult, preferenceResult].find((result) => result.error)?.error
   if (firstError) throw firstError
 
   let profileRow = profileResult.data
@@ -109,6 +110,7 @@ export async function loadRemoteData(user: User): Promise<AppData> {
   }
 
   const favorites = new Set((favoriteResult.data ?? []).map((item) => item.exercise_id))
+  const preferences = new Map((preferenceResult.data ?? []).map((item) => [item.exercise_id, item]))
   const exercises = await Promise.all(((exerciseResult.data ?? []) as ExerciseRow[]).map(async (row) => ({
     id: row.id,
     ownerId: row.owner_id,
@@ -116,7 +118,9 @@ export async function loadRemoteData(user: User): Promise<AppData> {
     category: row.category,
     bodyArea: row.body_area,
     equipment: row.equipment ?? 'None',
-    defaultTarget: row.default_target ?? '',
+    defaultTarget: preferences.get(row.id)?.target ?? row.default_target ?? '',
+    defaultWeight: preferences.get(row.id)?.weight ?? null,
+    defaultWeightUnit: preferences.get(row.id)?.weight_unit ?? 'lb',
     imagePath: row.image_path,
     imageUrl: await imageUrl(row.image_path),
     isFavorite: favorites.has(row.id),
@@ -161,6 +165,17 @@ export function loadCachedRemoteData(userId: string): AppData | null {
   const value = localStorage.getItem(remoteCacheKey(userId))
   if (!value) return null
   try { return JSON.parse(value) as AppData } catch { return null }
+}
+
+export async function saveRemoteExerciseSettings(userId: string, exerciseId: string, settings: ExerciseSettings) {
+  const { error } = await supabase!.from('exercise_preferences').upsert({
+    user_id: userId,
+    exercise_id: exerciseId,
+    target: settings.target,
+    weight: settings.weight,
+    weight_unit: settings.weightUnit,
+  })
+  if (error) throw error
 }
 
 export async function saveRemoteDayPlan(draft: DayDraft) {

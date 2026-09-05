@@ -1,4 +1,4 @@
-import { Check, ChevronRight, Pencil, Sparkles } from 'lucide-react'
+import { Check, ChevronRight, Sparkles } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { useEffect, useState } from 'react'
 import type { DayExercise, DayPlan } from '../types'
@@ -54,7 +54,7 @@ export function TodayView({ displayName, today, plan, completed, total, offline,
             <p className="eyebrow">TODAY’S PLAN</p>
             <h2 id="today-plan-title">{plan?.title || 'Nothing planned yet'}</h2>
           </div>
-          {plan && <button className="text-button" onClick={onEdit}><Pencil aria-hidden="true" /> Edit</button>}
+          {plan && <span className="section-count">{plan.exercises.length} exercises</span>}
         </div>
 
         {plan?.exercises.length ? (

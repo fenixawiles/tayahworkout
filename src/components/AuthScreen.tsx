@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Dumbbell, Eye, EyeOff } from 'lucide-react'
+import { Activity, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { authRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
 
@@ -67,8 +67,7 @@ export function AuthScreen({ onDemo, onAuthenticated, recoveryMode }: AuthScreen
 
   return (
     <main className="auth-shell">
-      <div className="auth-brand" aria-hidden="true"><Dumbbell /></div>
-      <p className="auth-wordmark">Momentum</p>
+      <header className="auth-masthead"><div className="auth-brand" aria-hidden="true"><Activity /></div><p className="auth-wordmark">momentum</p></header>
       <section className="auth-card" aria-labelledby="auth-title">
         <p className="eyebrow">YOUR WORKOUT CALENDAR</p>
         <h1 id="auth-title">{title}</h1>

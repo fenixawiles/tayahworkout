@@ -1,5 +1,12 @@
 export type ExerciseCategory = 'strength' | 'bodyweight' | 'cardio' | 'mobility' | 'recovery'
 export type BodyArea = 'upper-body' | 'lower-body' | 'core' | 'full-body'
+export type WeightUnit = 'lb' | 'kg'
+
+export interface ExerciseSettings {
+  target: string
+  weight: number | null
+  weightUnit: WeightUnit
+}
 
 export interface Profile {
   id: string
@@ -15,6 +22,8 @@ export interface Exercise {
   bodyArea: BodyArea
   equipment: string
   defaultTarget: string
+  defaultWeight?: number | null
+  defaultWeightUnit?: WeightUnit
   imagePath: string | null
   imageUrl: string | null
   isFavorite: boolean
